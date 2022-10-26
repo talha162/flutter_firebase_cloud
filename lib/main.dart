@@ -38,8 +38,6 @@ class _MainPageState extends State<MainPage> {
 }
 
 
-
-
 //
 // class LoginPage extends StatelessWidget {
 //   const LoginPage({Key? key}) : super(key: key);
@@ -144,13 +142,37 @@ class _SignupState extends State<Signup> {
   Future<void> signup(email, password) async {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(email: email, password: password).then((value) {
+        Fluttertoast.showToast(
+            msg: "Signup",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0);
+        return value;
+      });
       FirebaseAuth.instance.signOut();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        Fluttertoast.showToast(
+            msg: "The password provided is too weak.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0);
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        Fluttertoast.showToast(
+            msg: "The account already exists for that email.",
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 16.0);
       }
     } catch (e) {
       print(e);
@@ -210,18 +232,18 @@ class _SignupState extends State<Signup> {
 }
 
 final CollectionReference _users =
-    FirebaseFirestore.instance.collection('users');
-
-class AddUserPage extends StatelessWidget {
-  const AddUserPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: FirebaseStoreAddUser(),
-    );
-  }
-}
+FirebaseFirestore.instance.collection('users');
+//
+// class AddUserPage extends StatelessWidget {
+//   const AddUserPage({Key? key}) : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       home: FirebaseStoreAddUser(),
+//     );
+//   }
+// }
 
 class DeleteUserPage extends StatelessWidget {
   const DeleteUserPage({Key? key}) : super(key: key);
@@ -280,8 +302,7 @@ class _FirebaseStoreAddUserState extends State<FirebaseStoreAddUser> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(children: [
+    return Column(children: [
         SizedBox(height: 60,),
         Container(
             padding: EdgeInsets.symmetric(vertical: 1.0, horizontal: 16.0),
@@ -336,7 +357,7 @@ class _FirebaseStoreAddUserState extends State<FirebaseStoreAddUser> {
             ElevatedButton(
                 onPressed: () {
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddUserPage()));
+                      MaterialPageRoute(builder: (context) => MainPage()));
                 },
                 child: Text("Add")),
             ElevatedButton(
@@ -370,34 +391,41 @@ class _FirebaseStoreAddUserState extends State<FirebaseStoreAddUser> {
               FirebaseAuth.instance.signOut();
             },
             child: Text("Logout")),
-        StreamBuilder(
-          stream: _users.snapshots() //build connection
-          ,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return ListView.builder(
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (context, index) {
-                  final DocumentSnapshot documentsnapshot =
-                      snapshot.data!.docs[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(documentsnapshot['name']),
-                      subtitle: Text(documentsnapshot['email']),
-                    ),
-                  );
-                },
+
+       SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+         child:
+        Container(
+            height: 400,
+      child: StreamBuilder(
+            stream: _users.snapshots() //build connection
+            ,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    final DocumentSnapshot documentsnapshot =
+                    snapshot.data!.docs[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(documentsnapshot['name']),
+                        subtitle: Text(documentsnapshot['email']),
+                      ),
+                    );
+                  },
+                );
+              }
+              return const Center(
+                child: CircularProgressIndicator(),
               );
-            }
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          },
-        )
-      ]),
-    );
+            },
+          )
+        ),
+    )
+      ]);
   }
 }
 
@@ -436,7 +464,7 @@ class _FirebaseStoreDeleteUserState extends State<FirebaseStoreDeleteUser> {
                 final email = _email_controller.text;
                 var collection = FirebaseFirestore.instance.collection('users');
                 var snapshot =
-                    await collection.where('email', isEqualTo: email).get();
+                await collection.where('email', isEqualTo: email).get();
                 for (var doc in snapshot.docs) {
                   await doc.reference.delete().then((value) {
                     Fluttertoast.showToast(
@@ -458,7 +486,7 @@ class _FirebaseStoreDeleteUserState extends State<FirebaseStoreDeleteUser> {
             ElevatedButton(
                 onPressed: () {
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddUserPage()));
+                      MaterialPageRoute(builder: (context) => MainPage()));
                 },
                 child: Text("Add")),
             ElevatedButton(
@@ -487,6 +515,11 @@ class _FirebaseStoreDeleteUserState extends State<FirebaseStoreDeleteUser> {
                 child: Text("Delete")),
           ],
         ),
+    SingleChildScrollView(
+    scrollDirection: Axis.vertical,
+    child: Container(
+    height:270,
+        child:
         StreamBuilder(
           stream: _users.snapshots() //build connection
           ,
@@ -498,7 +531,7 @@ class _FirebaseStoreDeleteUserState extends State<FirebaseStoreDeleteUser> {
                 itemCount: snapshot.data!.docs.length,
                 itemBuilder: (context, index) {
                   final DocumentSnapshot documentsnapshot =
-                      snapshot.data!.docs[index];
+                  snapshot.data!.docs[index];
                   return Card(
                     child: ListTile(
                       title: Text(documentsnapshot['name']),
@@ -512,7 +545,7 @@ class _FirebaseStoreDeleteUserState extends State<FirebaseStoreDeleteUser> {
               child: CircularProgressIndicator(),
             );
           },
-        )
+        )))
       ]),
       appBar: AppBar(title: Text("Delete Users")),
     );
@@ -536,8 +569,11 @@ class _FirebaseStoreSearchUserState extends State<FirebaseStoreSearchUser> {
   List searchResult = [];
 
   void searchResultFromFirebase(query) async {
+    print("query:$query");
     final result = await _users.where('email', isEqualTo: query).get();
+    print("result:$result");
     searchResult = result.docs.map((e) => e.data()).toList();
+    print("searchresult:$searchResult");
   }
 
   var email_controller = TextEditingController();
@@ -545,68 +581,84 @@ class _FirebaseStoreSearchUserState extends State<FirebaseStoreSearchUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(children: [
+        body: Column(children: [
         Container(
-            padding: EdgeInsets.symmetric(vertical: 1.0, horizontal: 16.0),
-            child: TextFormField(
-              controller: email_controller,
-              decoration: InputDecoration(hintText: "Enter Email"),
-              onChanged: (value) {
-                setState(() {
-                  searchResultFromFirebase(value);
-                });
-              },
-            )),
-        Expanded(
-            child: ListView.builder(
-          itemCount: searchResult.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(searchResult[index]['email']),
-              subtitle: Text(searchResult[index]['name']),
-            );
-          },
+        padding: EdgeInsets.symmetric(vertical: 1.0, horizontal: 16.0),
+        child: TextFormField(
+          controller: email_controller,
+          decoration: InputDecoration(hintText: "Enter Email"),
         )),
-        SizedBox(
-          height: 10,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => AddUserPage()));
-                },
-                child: Text("Add")),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => SearchUserPage()));
-                },
-                child: Text("Search")),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => UpdateUserPage()));
-                },
-                child: Text("Update")),
-            ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => DeleteUserPage()));
-                },
-                child: Text("Delete")),
-          ],
-        ),
-      ]),
-      appBar: AppBar(title: Text("Search Users")),
+    ElevatedButton(onPressed: (){
+    setState(() {
+    searchResultFromFirebase(email_controller.text);
+    });
+    }, child: Text("Search User")),
+    Expanded(
+    child:
+    StreamBuilder(
+    stream: _users.snapshots() //build connection
+    ,
+    builder: (context, snapshot) {
+    if (snapshot.hasData) {
+    return
+      ListView.builder(
+        itemCount: searchResult.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(searchResult[index]['email']),
+            subtitle: Text(searchResult[index]['name']),
+          );
+        },
+      );
+    }
+    return const Center(
+    child: CircularProgressIndicator(),
+    );
+    },
+    )
+    )
+,
+    SizedBox(
+    height: 10,
+    ),
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    children: [
+    ElevatedButton(
+    onPressed: () {
+    Navigator.push(context,
+    MaterialPageRoute(builder: (context) => MainPage()));
+    },
+    child: Text("Add")),
+    ElevatedButton(
+    onPressed: () {
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+    builder: (context) => SearchUserPage()));
+    },
+    child: Text("Search")),
+    ElevatedButton(
+    onPressed: () {
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+    builder: (context) => UpdateUserPage()));
+    },
+    child: Text("Update")),
+    ElevatedButton(
+    onPressed: () {
+    Navigator.push(
+    context,
+    MaterialPageRoute(
+    builder: (context) => DeleteUserPage()));
+    },
+    child: Text("Delete")),
+    ],
+    ),
+    ]),
+    appBar: AppBar(title: Text("Search Users"))
+    ,
     );
   }
 }
@@ -633,8 +685,7 @@ class _FirebaseStoreUpdateUserState extends State<FirebaseStoreUpdateUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(children: [
+      body: Column(children: [
           Container(
               padding: EdgeInsets.symmetric(vertical: 1.0, horizontal: 16.0),
               child: TextFormField(
@@ -642,9 +693,9 @@ class _FirebaseStoreUpdateUserState extends State<FirebaseStoreUpdateUser> {
                 decoration: InputDecoration(hintText: "Enter Email"),
                 onChanged: (value) async {
                   var collection =
-                      FirebaseFirestore.instance.collection('users');
+                  FirebaseFirestore.instance.collection('users');
                   var snapshot =
-                      await collection.where('email', isEqualTo: value).get();
+                  await collection.where('email', isEqualTo: value).get();
                   _name_controller.text = "";
                   _email_controller.text = "";
                   _password_controller.text = "";
@@ -685,7 +736,7 @@ class _FirebaseStoreUpdateUserState extends State<FirebaseStoreUpdateUser> {
                   final email = _email_controller.text;
                   final password = _password_controller.text;
                   var collection =
-                      FirebaseFirestore.instance.collection('users');
+                  FirebaseFirestore.instance.collection('users');
                   await collection
                       .where('email', isEqualTo: _email_search_controller.text)
                       .get()
@@ -719,7 +770,7 @@ class _FirebaseStoreUpdateUserState extends State<FirebaseStoreUpdateUser> {
               ElevatedButton(
                   onPressed: () {
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => AddUserPage()));
+                        MaterialPageRoute(builder: (context) => MainPage()));
                   },
                   child: Text("Add")),
               ElevatedButton(
@@ -748,35 +799,39 @@ class _FirebaseStoreUpdateUserState extends State<FirebaseStoreUpdateUser> {
                   child: Text("Delete")),
             ],
           ),
-          StreamBuilder(
-            stream: _users.snapshots() //build connection
-            ,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (context, index) {
-                    final DocumentSnapshot documentsnapshot =
-                        snapshot.data!.docs[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text(documentsnapshot['name']),
-                        subtitle: Text(documentsnapshot['email']),
-                      ),
-                    );
-                  },
+
+          SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+            child: Container(
+                height:300,
+              child: StreamBuilder(
+              stream: _users.snapshots() //build connection
+              ,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final DocumentSnapshot documentsnapshot =
+                      snapshot.data!.docs[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(documentsnapshot['name']),
+                          subtitle: Text(documentsnapshot['email']),
+                        ),
+                      );
+                    },
+                  );
+                }
+                return const Center(
+                  child: CircularProgressIndicator(),
                 );
-              }
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            },
-          )
+              },
+            )),
+        )
         ]),
-      ),
-      appBar: AppBar(title: Text("Update Users")),
-    );
+      );
   }
 }
